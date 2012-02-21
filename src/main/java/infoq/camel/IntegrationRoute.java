@@ -8,9 +8,9 @@ public class IntegrationRoute extends RouteBuilder {
 	public void configure() throws Exception {
 		
 		// Consumer Endpoint
-		from("file:orders/inbox")
+		from("file:orders/inbox?noop=true")
 			// if tracing is turned on, you get very detailed information about processing within the route.
-			.tracing()
+			//.tracing()
 			// a processor does custom integration logic
 			.process(new LoggingProcessor())
 			// a bean also does custom integration logic
@@ -18,9 +18,8 @@ public class IntegrationRoute extends RouteBuilder {
 			// Translator EIP (using the camel-csv component)
 			.unmarshal().csv()
 			// Splitter EIP
-			.split().body()
+			.split(body().tokenize(","))
 			// Content-based Router EIP
-			.log("Kai: ${body}")
 			.choice()
 				.when(body().contains("DVD"))
 					// Producer Endpoint
@@ -28,8 +27,7 @@ public class IntegrationRoute extends RouteBuilder {
 				.when(body().contains("CD"))
 					.to("file:orders/outbox/cd")
 				.otherwise()
-					.to("file:orders/mock");
-		
+					.to("mock:others");
 	}
 
 }
